@@ -9,16 +9,71 @@ description: 对象数据转换方法参考
 
 ## 方法列表
 
-### isEmpty()
+### compact()
 
-检查对象是否没有任何键值对。
+移除所有值为 `null` 或 `undefined` 的字段。递归处理嵌套对象。
+
+**返回值**: `Object`
+
+**示例**:
+
+```javascript
+{{ ({ x: null, y: 2, z: '', w: 'nil', a: {} }).compact() }}
+// { y: 2, z: '', w: 'nil', a: {} }
+
+{{ { a: 1, b: null, c: undefined, d: "hello" }.compact() }}
+// { "a": 1, "d": "hello" }
+
+{{ { a: 0, b: "", c: [], d: {} }.compact() }}
+// { "a": 0, "b": "", "c": [], "d": {} }
+// 注意：0、空字符串、空数组、空对象不会被移除
+
+{{ $('HTTP Request').body.user.compact() }}
+// 移除用户对象中的 null 和 undefined 值（递归）
+```
+
+---
+
+### hasField(fieldName: String)
+
+如果存在名为 `name` 的字段，返回 `true`。仅检查顶层键。比较是大小写敏感的。
+
+**参数**:
+- `fieldName` (String): 要搜索的键名
 
 **返回值**: `Boolean`
 
 **示例**:
 
 ```javascript
-{{ {}.isEmpty() }}
+{{ ({ name: 'Nathan', age: 42 }).hasField('name') }}
+// true
+
+{{ ({ name: 'Nathan', age: 42 }).hasField('Name') }}
+// false
+
+{{ ({ name: 'Nathan', age: 42 }).hasField('inventedField') }}
+// false
+
+{{ $('HTTP Request').body.user.hasField('email') }}
+// 检查用户对象是否包含邮箱字段
+```
+
+---
+
+### isEmpty()
+
+如果对象没有设置任何键（字段）或是 `null`，返回 `true`。
+
+**返回值**: `Boolean`
+
+**示例**:
+
+```javascript
+{{ ({ name: 'Nathan' }).isEmpty() }}
+// false
+
+{{ ({}).isEmpty() }}
 // true
 
 {{ { name: 'Alice' }.isEmpty() }}
@@ -30,21 +85,70 @@ description: 对象数据转换方法参考
 
 ---
 
-### merge(object: Object)
+### isNotEmpty()
 
-将两个对象合并为一个对象，以第一个对象作为基础。如果两个对象中存在相同的键，基础对象的键优先保留。
+如果对象至少设置了一个键（字段），返回 `true`。
+
+**返回值**: `Boolean`
+
+**示例**:
+
+```javascript
+{{ ({ name: 'Nathan' }).isNotEmpty() }}
+// true
+
+{{ ({}).isNotEmpty() }}
+// false
+
+{{ $('HTTP Request').body.config.isNotEmpty() }}
+// 检查配置对象是否有字段
+```
+
+---
+
+### keepFieldsContaining(value: String)
+
+移除值不完全匹配给定 `value` 的任何字段。比较是大小写敏感的。不是字符串的字段总是被移除。如果参数不是字符串，会抛出错误。
 
 **参数**:
-- `object` (Object): 要合并的对象
+- `value` (String): 值必须包含的文本才能被保留
 
 **返回值**: `Object`
 
 **示例**:
 
 ```javascript
-// 基础对象优先
-{{ { a: 1, b: 2 }.merge({ b: 3, c: 4 }) }}
-// { "a": 1, "b": 2, "c": 4 }
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).keepFieldsContaining('Nathan') }}
+// { name: 'Mr Nathan' }
+
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).keepFieldsContaining('nathan') }}
+// {}
+// 大小写敏感，所以 'Nathan' 不匹配 'nathan'
+
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).keepFieldsContaining('han') }}
+// { name: 'Mr Nathan', city: 'hanoi' }
+
+{{ $('HTTP Request').body.data.keepFieldsContaining("prod") }}
+// 只保留生产环境相关的字段
+```
+
+---
+
+### merge(object: Object)
+
+使用当前对象作为基础，将两个对象合并为一个新对象。如果两个对象共享一个键，基础对象的值会被保留。如果参数不是对象或是数组，会抛出错误。
+
+**参数**:
+- `object` (Object): 要合并到基础对象中的对象
+
+**返回值**: `Object`
+
+**示例**:
+
+```javascript
+// 基础对象的值优先
+{{ ({ a: 1, b: 2 }).merge({ b: 3, c: 4 }) }}
+// { a: 1, b: 2, c: 4 }
 
 {{ { name: 'Alice', age: 25 }.merge({ age: 30, city: 'Beijing' }) }}
 // { "name": "Alice", "age": 25, "city": "Beijing" }
@@ -55,33 +159,9 @@ description: 对象数据转换方法参考
 
 ---
 
-### hasField(fieldName: String)
-
-检查对象是否包含指定字段。仅支持顶层键。
-
-**参数**:
-- `fieldName` (String): 要检查的字段名
-
-**返回值**: `Boolean`
-
-**示例**:
-
-```javascript
-{{ { name: 'Alice', age: 25 }.hasField('name') }}
-// true
-
-{{ { name: 'Alice', age: 25 }.hasField('email') }}
-// false
-
-{{ $('HTTP Request').body.user.hasField('email') }}
-// 检查用户对象是否包含邮箱字段
-```
-
----
-
 ### removeField(key: String)
 
-从对象中移除指定字段。
+从对象中移除一个字段。与 JavaScript 的 `delete` 相同。如果字段不存在，返回原对象。
 
 **参数**:
 - `key` (String): 要移除的字段名
@@ -91,6 +171,9 @@ description: 对象数据转换方法参考
 **示例**:
 
 ```javascript
+{{ ({ name: 'Nathan', city: 'hanoi' }).removeField('name') }}
+// { city: 'hanoi' }
+
 {{ { name: 'Alice', age: 25, password: '123456' }.removeField('password') }}
 // { "name": "Alice", "age": 25 }
 
@@ -102,27 +185,25 @@ description: 对象数据转换方法参考
 
 ### removeFieldsContaining(value: String)
 
-从对象中移除所有值包含指定字符串的字段。
+移除值至少部分匹配给定 `value` 的键（字段）。比较是大小写敏感的。不是字符串的字段总是被保留。如果参数不是字符串，会抛出错误。
 
 **参数**:
-- `value` (String): 要删除的字段的字段值（字符串匹配）
+- `value` (String): 值必须包含的文本才能被移除
 
 **返回值**: `Object`
 
 **示例**:
 
 ```javascript
-{{ { a: "apple", b: "banana", c: "cherry" }.removeFieldsContaining("a") }}
-// { "c": "cherry" }
-// 移除值包含 "a" 的字段
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).removeFieldsContaining('Nathan') }}
+// { city: 'hanoi', age: 42 }
 
-{{ { a: "test", b: "production", c: "test_mode" }.removeFieldsContaining("test") }}
-// { "b": "production" }
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).removeFieldsContaining('Han') }}
+// { age: 42 }
 
-// 将空字符串作为指定值
-{{ { a: "apple", b: "banana" }.removeFieldsContaining("") }}
-// {}
-// 所有字符串都包含空字符串，所以全部移除
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).removeFieldsContaining('nathan') }}
+// { name: 'Mr Nathan', city: 'hanoi', age: 42 }
+// 大小写敏感，所以 'Nathan' 不匹配 'nathan'
 
 {{ $('HTTP Request').body.data.removeFieldsContaining("temp") }}
 // 移除所有包含 "temp" 的临时字段
@@ -130,70 +211,18 @@ description: 对象数据转换方法参考
 
 ---
 
-### keepFieldsContaining(value: String)
-
-从对象中删除与给定值不匹配的字段（保留包含指定字符串的字段）。
-
-**参数**:
-- `value` (String): 要保留的字段的字段值（字符串匹配）
-
-**返回值**: `Object`
-
-**示例**:
-
-```javascript
-{{ { a: "apple", b: "banana", c: "cherry" }.keepFieldsContaining("a") }}
-// { "a": "apple", "b": "banana" }
-// 保留值包含 "a" 的字段
-
-{{ { a: "apple", b: "banana", c: "cherry" }.keepFieldsContaining("x") }}
-// {}
-// 没有字段值包含 "x"
-
-{{ { a: "apple", b: "banana" }.keepFieldsContaining("") }}
-// { "a": "apple", "b": "banana" }
-// 所有字符串都包含空字符串，所以全部保留
-
-{{ $('HTTP Request').body.data.keepFieldsContaining("prod") }}
-// 只保留生产环境相关的字段
-```
-
----
-
-### compact()
-
-从对象中移除空值（只移除 `null` 和 `undefined`）。
-
-**返回值**: `Object`
-
-**示例**:
-
-```javascript
-{{ { a: 1, b: null, c: undefined, d: "hello" }.compact() }}
-// { "a": 1, "d": "hello" }
-
-{{ { a: 0, b: "", c: [], d: {} }.compact() }}
-// { "a": 0, "b": "", "c": [], "d": {} }
-// 注意：0、空字符串、空数组、空对象不会被移除
-
-{{ { a: false, b: null, c: undefined }.compact() }}
-// { "a": false }
-
-{{ $('HTTP Request').body.user.compact() }}
-// 移除用户对象中的 null 和 undefined 值
-```
-
----
-
 ### toJsonString()
 
-将对象转换为 JSON 字符串。相当于 `JSON.stringify`。
+将对象转换为 JSON 字符串。类似于 JavaScript 的 `JSON.stringify()`。
 
 **返回值**: `String`
 
 **示例**:
 
 ```javascript
+{{ ({ name: 'Mr Nathan', age: 42 }).toJsonString() }}
+// '{"name":"Nathan","age":42}'
+
 {{ { name: 'Alice', age: 25 }.toJsonString() }}
 // '{"name":"Alice","age":25}'
 
@@ -205,18 +234,21 @@ description: 对象数据转换方法参考
 
 ### urlEncode()
 
-将对象转换为 URL 参数。仅支持顶层键。
+从对象的键和值生成 URL 参数字符串。仅支持顶层键。
 
 **返回值**: `String`
 
 **示例**:
 
 ```javascript
+{{ ({ name: 'Mr Nathan', city: 'hanoi' }).urlEncode() }}
+// 'name=Mr+Nathan&city=hanoi'
+
 {{ { name: 'Alice', age: 25 }.urlEncode() }}
 // "name=Alice&age=25"
 
 {{ { q: 'hello world', page: 1 }.urlEncode() }}
-// "q=hello%20world&page=1"
+// "q=hello+world&page=1"
 
 {{ $('HTTP Request').body.params.urlEncode() }}
 // 将参数对象转换为 URL 查询字符串
@@ -285,6 +317,9 @@ description: 对象数据转换方法参考
 
 // 检查对象是否为空
 {{ $('HTTP Request').body.result.isEmpty() }}
+
+// 检查对象是否有字段
+{{ $('HTTP Request').body.result.isNotEmpty() }}
 ```
 
 ## 链式调用

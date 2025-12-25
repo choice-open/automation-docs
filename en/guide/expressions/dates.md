@@ -11,12 +11,12 @@ Date methods are used to process and transform date and time data. {{PRODUCT_NAM
 
 ### beginningOf(unit?: DurationUnit)
 
-Converts a date to the beginning of the specified time period. Returns JavaScript Date or Luxon DateTime depending on input type.
+Transform a Date to the start of the given time period. Default unit is `week`. Returns JavaScript Date or Luxon DateTime depending on input type.
 
 **Parameters**:
 - `unit` (DurationUnit, optional): Valid string specifying time unit. Values: `second`, `minute`, `hour`, `day`, `week`, `month`, `year`. Default: `week`.
 
-**Returns**: `Date`
+**Returns**: `Date | DateTime`
 
 **Examples**:
 
@@ -43,9 +43,9 @@ Converts a date to the beginning of the specified time period. Returns JavaScrip
 
 ### endOfMonth()
 
-Converts a date to the end of the month (last day at 23:59:59.999).
+Transforms a date to the last possible moment that lies within the month. Returns JavaScript Date or Luxon DateTime depending on input type.
 
-**Returns**: `Date`
+**Returns**: `Date | DateTime`
 
 **Examples**:
 
@@ -61,37 +61,49 @@ Converts a date to the end of the month (last day at 23:59:59.999).
 
 ---
 
-### extract(datePart?: DurationUnit)
+### extract(datePart?: DatePart)
 
-Extracts a specified part from a date: year, month, day, etc. Returns a number.
+Extracts a part of the date or time, e.g. the month, as a number. To extract textual names instead, see `format()`. Default unit is `week`.
 
 **Parameters**:
-- `datePart` (DurationUnit, optional): Valid string specifying time unit. Values: `second`, `minute`, `hour`, `day`, `week`, `month`, `year`. Default: `week`.
+- `datePart` (DatePart, optional): The part of the date or time to return. Values: `year`, `month`, `week`, `day`, `hour`, `minute`, `second`, `millisecond`, `weekNumber`, `yearDayNumber`, `weekday`. Default: `week`.
 
 **Returns**: `Number`
 
 **Examples**:
 
 ```javascript
-// Assuming date is 2025-09-18T15:30:45.123-04:00
+// Assuming date is 2024-03-30T18:49:00.000Z
 
 {{ $now().extract('year') }}
-// 2025
+// 2024
 
 {{ $now().extract('month') }}
-// 9
+// 3
 
 {{ $now().extract('day') }}
-// 18
-
-{{ $now().extract('hour') }}
-// 15
-
-{{ $now().extract('minute') }}
 // 30
 
+{{ $now().extract('hour') }}
+// 18
+
+{{ $now().extract('minute') }}
+// 49
+
 {{ $now().extract('second') }}
-// 45
+// 0
+
+{{ $now().extract('millisecond') }}
+// 0
+
+{{ $now().extract('weekNumber') }}
+// Week number of the year
+
+{{ $now().extract('yearDayNumber') }}
+// Day number of the year (1-365/366)
+
+{{ $now().extract('weekday') }}
+// Day of week (1-7, Monday=1)
 
 {{ $('HTTP Request').body.createdAt.extract('year') }}
 // Extract creation year
@@ -99,12 +111,13 @@ Extracts a specified part from a date: year, month, day, etc. Returns a number.
 
 ---
 
-### format(fmt: TimeFormat)
+### format(fmt: TimeFormat, localeOpts?: LocaleOptions)
 
-Formats a date to a specified structure using Luxon formatting tokens.
+Converts the DateTime to a string, using the format specified. See [Luxon formatting tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens). For common formats, `toLocaleString()` may be easier.
 
 **Parameters**:
-- `fmt` (TimeFormat): Valid string specifying time format. See [Luxon formatting tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
+- `fmt` (TimeFormat): The format of the string to return. Default: `'yyyy-MM-dd'`. See [Luxon formatting tokens](https://moment.github.io/luxon/#/formatting?id=table-of-tokens).
+- `localeOpts` (LocaleOptions, optional): Locale options for formatting.
 
 **Returns**: `String`
 
@@ -142,28 +155,45 @@ Formats a date to a specified structure using Luxon formatting tokens.
 {{ $now().format('hh:mm a') }}
 // "03:30 pm"
 
+{{ $now().format('dd/LL/yyyy') }}
+// "30/04/2024"
+
+{{ $now().format('dd LLL yy') }}
+// "30 Apr 24"
+
+{{ $now().setLocale('fr').format('dd LLL yyyy') }}
+// "30 avr. 2024"
+
+{{ $now().format("HH 'hours and' mm 'minutes'") }}
+// "18 hours and 49 minutes"
+
 {{ $('HTTP Request').body.createdAt.format('yyyy-MM-dd') }}
 // Format creation date
 ```
 
 ---
 
-### isBetween(date1: Date | DateTime, date2: Date | DateTime)
+### isBetween(date1: Date | DateTime | String, date2: Date | DateTime | String)
 
-Checks if a date falls between two specified dates.
+Returns `true` if the DateTime lies between the two moments specified. Requires exactly two arguments. Can be an ISO date string or a Luxon DateTime.
 
 **Parameters**:
-- `date1` (Date | DateTime): Start date
-- `date2` (Date | DateTime): End date
+- `date1` (Date | DateTime | String): The moment that the base DateTime must be after. Can be an ISO date string or a Luxon DateTime.
+- `date2` (Date | DateTime | String): The moment that the base DateTime must be before. Can be an ISO date string or a Luxon DateTime.
 
 **Returns**: `Boolean`
 
 **Examples**:
 
 ```javascript
-{{ $now().isBetween('2025-01-01', '2025-12-31') }}
-// Check if current date is in 2025
+// Using ISO date strings
+{{ $now().isBetween('2020-01-01', '2025-12-31') }}
+// true
 
+{{ $now().isBetween('2020', '2025') }}
+// true
+
+// Using DateTime objects
 {{ $('HTTP Request').body.eventDate.isBetween(
   $('HTTP Request').body.startDate,
   $('HTTP Request').body.endDate
@@ -175,11 +205,11 @@ Checks if a date falls between two specified dates.
 
 ### isInLast(n?: Number, unit?: DurationUnit)
 
-Checks if a date falls within a specified time period (last n units).
+Checks if a Date is within a given time period. Default unit is `minutes`.
 
 **Parameters**:
 - `n` (Number, optional): Number of units. For example, enter 9 to check if date is within last 9 weeks. Default: 0
-- `unit` (DurationUnit, optional): Valid string specifying time unit. Values: `second`, `minute`, `hour`, `day`, `week`, `month`, `year`. Default: `minute`.
+- `unit` (DurationUnit, optional): Valid string specifying time unit. Values: `milliseconds`, `seconds`, `minutes`, `hours`, `days`, `weeks`, `months`, `years`. Default: `minutes`.
 
 **Returns**: `Boolean`
 
@@ -224,15 +254,15 @@ Checks if a date is Saturday or Sunday.
 
 ---
 
-### minus(n: Number, unit?: DurationUnit)
+### minus(n: Number | DurationLike, unit?: DurationUnit)
 
-Subtracts a specified time period from a date. Returns JavaScript Date or Luxon DateTime depending on input type.
+Subtracts a given period of time from the DateTime. The number of units to subtract, or use a Luxon [Duration](https://moment.github.io/luxon/api-docs/index.html#duration) object to subtract multiple units at once.
 
 **Parameters**:
-- `n` (Number): Number of units. For example, enter 9 to subtract 9 seconds.
-- `unit` (DurationUnit, optional): Valid string specifying time unit. Values: `milliseconds` (default), `second`, `minute`, `hour`, `day`, `week`, `month`, `year`.
+- `n` (Number | DurationLike): The number of units to subtract, or a Luxon Duration object.
+- `unit` (DurationUnit, optional): The units of the number. Values: `years`, `months`, `weeks`, `days`, `hours`, `minutes`, `seconds`, `milliseconds`. Default: `milliseconds`.
 
-**Returns**: `Date`
+**Returns**: `Date | DateTime`
 
 **Examples**:
 
@@ -263,15 +293,15 @@ Subtracts a specified time period from a date. Returns JavaScript Date or Luxon 
 
 ---
 
-### plus(n: Number, unit?: DurationUnit)
+### plus(n: Number | DurationLike, unit?: DurationUnit)
 
-Adds a specified time period to a date. Returns JavaScript Date or Luxon DateTime depending on input type.
+Adds a given period of time to the DateTime. The number of units to add, or use a Luxon [Duration](https://moment.github.io/luxon/api-docs/index.html#duration) object to add multiple units at once.
 
 **Parameters**:
-- `n` (Number): Number of units. For example, enter 9 to add 9 seconds.
-- `unit` (DurationUnit, optional): Valid string specifying time unit. Values: `milliseconds` (default), `second`, `minute`, `hour`, `day`, `week`, `month`, `year`.
+- `n` (Number | DurationLike): The number of units to add, or a Luxon Duration object.
+- `unit` (DurationUnit, optional): The units of the number. Values: `years`, `months`, `weeks`, `days`, `hours`, `minutes`, `seconds`, `milliseconds`. Default: `milliseconds`.
 
-**Returns**: `Date`
+**Returns**: `Date | DateTime`
 
 **Examples**:
 

@@ -11,12 +11,12 @@ description: 日期时间数据转换方法参考
 
 ### beginningOf(unit?: DurationUnit)
 
-将日期转换为指定时间段的开始时间。返回值根据输入类型，可为 JavaScript Date 或 Luxon DateTime。
+将日期转换为给定时间段的开始。默认单位是 `week`。返回值根据输入类型，可为 JavaScript Date 或 Luxon DateTime。
 
 **参数**:
 - `unit` (DurationUnit, 可选): 指定时间单位的有效字符串。枚举值：`second`、`minute`、`hour`、`day`、`week`、`month`、`year`。默认值为 `week`。
 
-**返回值**: `Date`
+**返回值**: `Date | DateTime`
 
 **示例**:
 
@@ -43,9 +43,9 @@ description: 日期时间数据转换方法参考
 
 ### endOfMonth()
 
-将日期转换为该月份的月底（最后一天的 23:59:59.999）。
+将日期转换为该月份内最后一个可能的时刻。返回值根据输入类型，可为 JavaScript Date 或 Luxon DateTime。
 
-**返回值**: `Date`
+**返回值**: `Date | DateTime`
 
 **示例**:
 
@@ -61,37 +61,49 @@ description: 日期时间数据转换方法参考
 
 ---
 
-### extract(datePart?: DurationUnit)
+### extract(datePart?: DatePart)
 
-从日期中提取指定的部分：年、月、日等（由 datePart 定义）。返回值为数字。
+提取日期或时间的部分，例如月份，作为数字。要提取文本名称，请参见 `format()`。默认单位是 `week`。
 
 **参数**:
-- `datePart` (DurationUnit, 可选): 指定时间单位的有效字符串。枚举值：`second`、`minute`、`hour`、`day`、`week`、`month`、`year`。默认值为 `week`。
+- `datePart` (DatePart, 可选): 要返回的日期或时间部分。枚举值：`year`、`month`、`week`、`day`、`hour`、`minute`、`second`、`millisecond`、`weekNumber`、`yearDayNumber`、`weekday`。默认值为 `week`。
 
 **返回值**: `Number`
 
 **示例**:
 
 ```javascript
-// 假设日期为 2025-09-18T15:30:45.123-04:00
+// 假设日期为 2024-03-30T18:49:00.000Z
 
 {{ $now().extract('year') }}
-// 2025
+// 2024
 
 {{ $now().extract('month') }}
-// 9
+// 3
 
 {{ $now().extract('day') }}
-// 18
-
-{{ $now().extract('hour') }}
-// 15
-
-{{ $now().extract('minute') }}
 // 30
 
+{{ $now().extract('hour') }}
+// 18
+
+{{ $now().extract('minute') }}
+// 49
+
 {{ $now().extract('second') }}
-// 45
+// 0
+
+{{ $now().extract('millisecond') }}
+// 0
+
+{{ $now().extract('weekNumber') }}
+// 年份中的周数
+
+{{ $now().extract('yearDayNumber') }}
+// 年份中的天数（1-365/366）
+
+{{ $now().extract('weekday') }}
+// 星期几（1-7，星期一=1）
 
 {{ $('HTTP Request').body.createdAt.extract('year') }}
 // 提取创建年份
@@ -99,12 +111,13 @@ description: 日期时间数据转换方法参考
 
 ---
 
-### format(fmt: TimeFormat)
+### format(fmt: TimeFormat, localeOpts?: LocaleOptions)
 
-将日期格式化为指定的结构。使用 Luxon 格式化标记。
+使用指定的格式将 DateTime 转换为字符串。参见 [Luxon 格式化标记](https://moment.github.io/luxon/#/formatting?id=table-of-tokens)。对于常见格式，`toLocaleString()` 可能更容易。
 
 **参数**:
-- `fmt` (TimeFormat): 指定时间格式的有效字符串。参见 [Luxon 格式化标记](https://moment.github.io/luxon/#/formatting?id=table-of-tokens)。
+- `fmt` (TimeFormat): 要返回的字符串格式。默认：`'yyyy-MM-dd'`。参见 [Luxon 格式化标记](https://moment.github.io/luxon/#/formatting?id=table-of-tokens)。
+- `localeOpts` (LocaleOptions, 可选): 格式化的区域设置选项。
 
 **返回值**: `String`
 
@@ -145,28 +158,45 @@ description: 日期时间数据转换方法参考
 {{ $now().format('hh:mm a') }}
 // "03:30 pm"
 
+{{ $now().format('dd/LL/yyyy') }}
+// "30/04/2024"
+
+{{ $now().format('dd LLL yy') }}
+// "30 Apr 24"
+
+{{ $now().setLocale('fr').format('dd LLL yyyy') }}
+// "30 avr. 2024"
+
+{{ $now().format("HH 'hours and' mm 'minutes'") }}
+// "18 hours and 49 minutes"
+
 {{ $('HTTP Request').body.createdAt.format('yyyy-MM-dd') }}
 // 格式化创建日期
 ```
 
 ---
 
-### isBetween(date1: Date | DateTime, date2: Date | DateTime)
+### isBetween(date1: Date | DateTime | String, date2: Date | DateTime | String)
 
-检查一个日期是否在两个指定日期之间。
+如果 DateTime 位于指定的两个时刻之间，返回 `true`。需要恰好两个参数。可以是 ISO 日期字符串或 Luxon DateTime。
 
 **参数**:
-- `date1` (Date | DateTime): 开始日期
-- `date2` (Date | DateTime): 结束日期
+- `date1` (Date | DateTime | String): 基础 DateTime 必须在其之后的时刻。可以是 ISO 日期字符串或 Luxon DateTime。
+- `date2` (Date | DateTime | String): 基础 DateTime 必须在其之前的时刻。可以是 ISO 日期字符串或 Luxon DateTime。
 
 **返回值**: `Boolean`
 
 **示例**:
 
 ```javascript
-{{ $now().isBetween('2025-01-01', '2025-12-31') }}
-// 检查当前日期是否在 2025 年内
+// 使用 ISO 日期字符串
+{{ $now().isBetween('2020-01-01', '2025-12-31') }}
+// true
 
+{{ $now().isBetween('2020', '2025') }}
+// true
+
+// 使用 DateTime 对象
 {{ $('HTTP Request').body.eventDate.isBetween(
   $('HTTP Request').body.startDate,
   $('HTTP Request').body.endDate
@@ -178,11 +208,11 @@ description: 日期时间数据转换方法参考
 
 ### isInLast(n?: Number, unit?: DurationUnit)
 
-检查一个日期是否在指定的时间段内（过去 n 个单位时间内）。
+检查日期是否在给定的时间段内。默认单位是 `minutes`。
 
 **参数**:
 - `n` (Number, 可选): 单位数。例如，要检查日期是否在过去 9 周内，请输入 9。默认值：0
-- `unit` (DurationUnit, 可选): 指定时间单位的有效字符串。枚举值：`second`、`minute`、`hour`、`day`、`week`、`month`、`year`。默认为 `minute`。
+- `unit` (DurationUnit, 可选): 指定时间单位的有效字符串。枚举值：`milliseconds`、`seconds`、`minutes`、`hours`、`days`、`weeks`、`months`、`years`。默认为 `minutes`。
 
 **返回值**: `Boolean`
 
@@ -227,15 +257,15 @@ description: 日期时间数据转换方法参考
 
 ---
 
-### minus(n: Number, unit?: DurationUnit)
+### minus(n: Number | DurationLike, unit?: DurationUnit)
 
-从日期中减去指定的时间段。返回值根据输入类型，可为 JavaScript Date 或 Luxon DateTime。
+从 DateTime 中减去给定的时间段。要减去的单位数，或使用 Luxon [Duration](https://moment.github.io/luxon/api-docs/index.html#duration) 对象一次减去多个单位。
 
 **参数**:
-- `n` (Number): 单位数。例如，要减去 9 秒，请在此处输入 9。
-- `unit` (DurationUnit, 可选): 指定时间单位的有效字符串。枚举值：`milliseconds`（默认值）、`second`、`minute`、`hour`、`day`、`week`、`month`、`year`。
+- `n` (Number | DurationLike): 要减去的单位数，或 Luxon Duration 对象。
+- `unit` (DurationUnit, 可选): 数字的单位。枚举值：`years`、`months`、`weeks`、`days`、`hours`、`minutes`、`seconds`、`milliseconds`。默认值：`milliseconds`。
 
-**返回值**: `Date`
+**返回值**: `Date | DateTime`
 
 **示例**:
 
@@ -266,15 +296,15 @@ description: 日期时间数据转换方法参考
 
 ---
 
-### plus(n: Number, unit?: DurationUnit)
+### plus(n: Number | DurationLike, unit?: DurationUnit)
 
-向日期添加指定的时间段。返回值根据输入类型，可为 JavaScript Date 或 Luxon DateTime。
+向 DateTime 添加给定的时间段。要添加的单位数，或使用 Luxon [Duration](https://moment.github.io/luxon/api-docs/index.html#duration) 对象一次添加多个单位。
 
 **参数**:
-- `n` (Number): 单位数。例如，要添加 9 秒，请在此处输入 9。
-- `unit` (DurationUnit, 可选): 指定时间单位的有效字符串。枚举值：`milliseconds`（默认值）、`second`、`minute`、`hour`、`day`、`week`、`month`、`year`。
+- `n` (Number | DurationLike): 要添加的单位数，或 Luxon Duration 对象。
+- `unit` (DurationUnit, 可选): 数字的单位。枚举值：`years`、`months`、`weeks`、`days`、`hours`、`minutes`、`seconds`、`milliseconds`。默认值：`milliseconds`。
 
-**返回值**: `Date`
+**返回值**: `Date | DateTime`
 
 **示例**:
 

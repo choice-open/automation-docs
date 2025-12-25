@@ -11,18 +11,21 @@ Array methods are used to process and transform array data. All methods can be c
 
 ### average()
 
-Returns the average value of numeric elements in an array.
+Returns the average of the numbers in the array. Throws an error if there are any non-numbers. Returns `0` if the array is empty.
 
 **Returns**: `Number`
 
 **Examples**:
 
 ```javascript
+{{ [12, 1, 5].average() }}
+// 6
+
 {{ [1, 2, 3, 4, 5].average() }}
 // 3
 
-{{ [10, 20, 30].average() }}
-// 20
+{{ [].average() }}
+// 0
 
 {{ $('HTTP Request').body.prices.average() }}
 // Calculate average price
@@ -32,16 +35,19 @@ Returns the average value of numeric elements in an array.
 
 ### chunk(size: Number)
 
-Splits an array into multiple chunks of specified size.
+Splits the array into an array of sub-arrays, each with the given length. Throws an error if `size` is not a number or is zero.
 
 **Parameters**:
-- `size` (Number): Size of each chunk
+- `size` (Number): The number of elements in each chunk (must be a non-zero number)
 
 **Returns**: `Array`
 
 **Examples**:
 
 ```javascript
+{{ [1, 2, 3, 4, 5, 6].chunk(2) }}
+// [[1, 2], [3, 4], [5, 6]]
+
 {{ [1, 2, 3, 4, 5].chunk(2) }}
 // [[1, 2], [3, 4], [5]]
 
@@ -56,7 +62,7 @@ Splits an array into multiple chunks of specified size.
 
 ### compact()
 
-Removes null values (`null` and `undefined`) from an array.
+Removes `null` and `undefined` values from an array. Recursively processes nested arrays and objects.
 
 **Returns**: `Array`
 
@@ -70,6 +76,9 @@ Removes null values (`null` and `undefined`) from an array.
 // [0, false, '', 'hello']
 // Note: 0, false, '' are not removed
 
+{{ [2, null, 1, undefined, '', 'nil', []].compact() }}
+// [2, 1, '', 'nil', []]
+
 {{ $('HTTP Request').body.users.compact() }}
 // Remove null users
 ```
@@ -78,16 +87,19 @@ Removes null values (`null` and `undefined`) from an array.
 
 ### difference(arr: Array)
 
-Compares two arrays and returns all elements in the base array that are not in `arr`.
+Compares two arrays. Returns all elements in the base array that aren't present in `arr`. Duplicates are removed from the result.
 
 **Parameters**:
-- `arr` (Array): Array to compare against
+- `arr` (Array): The array to compare to the base array
 
 **Returns**: `Array`
 
 **Examples**:
 
 ```javascript
+{{ [1, 2, 3].difference([2, 3]) }}
+// [1]
+
 {{ [1, 2, 3, 4, 5].difference([3, 4, 5, 6, 7]) }}
 // [1, 2]
 
@@ -96,30 +108,6 @@ Compares two arrays and returns all elements in the base array that are not in `
 
 {{ $('Current Users').users.difference($('Previous Users').users) }}
 // Find new users
-```
-
----
-
-### intersection(arr: Array)
-
-Compares two arrays and returns all elements in the base array that also exist in `arr`.
-
-**Parameters**:
-- `arr` (Array): Array to compare against
-
-**Returns**: `Array`
-
-**Examples**:
-
-```javascript
-{{ [1, 2, 3, 4, 5].intersection([3, 4, 5, 6, 7]) }}
-// [3, 4, 5]
-
-{{ ['a', 'b', 'c'].intersection(['b', 'c', 'd']) }}
-// ['b', 'c']
-
-{{ $('List A').items.intersection($('List B').items) }}
-// Find common items
 ```
 
 ---
@@ -148,9 +136,36 @@ Returns the first element of an array. Returns `undefined` if array is empty.
 
 ---
 
+### intersection(arr: Array)
+
+Compares two arrays and returns all elements that exist in both arrays. Duplicates are removed from the result.
+
+**Parameters**:
+- `arr` (Array): Array to compare against
+
+**Returns**: `Array`
+
+**Examples**:
+
+```javascript
+{{ [1, 2, 3].intersection([2, 3]) }}
+// [2, 3]
+
+{{ [1, 2, 3, 4, 5].intersection([3, 4, 5, 6, 7]) }}
+// [3, 4, 5]
+
+{{ ['a', 'b', 'c'].intersection(['b', 'c', 'd']) }}
+// ['b', 'c']
+
+{{ $('List A').items.intersection($('List B').items) }}
+// Find common items
+```
+
+---
+
 ### isEmpty()
 
-Checks if an array is empty (has no elements).
+Returns `true` if the array has no elements or is `null`.
 
 **Returns**: `Boolean`
 
@@ -160,7 +175,7 @@ Checks if an array is empty (has no elements).
 {{ [].isEmpty() }}
 // true
 
-{{ [1, 2, 3].isEmpty() }}
+{{ ['quick', 'brown', 'fox'].isEmpty() }}
 // false
 
 {{ $('HTTP Request').body.items.isEmpty() }}
@@ -216,13 +231,16 @@ Returns the last element of an array. Returns `undefined` if array is empty.
 
 ### max()
 
-Returns the maximum value in the array.
+Returns the largest number in the array. Throws an error if there are any non-numbers. String numbers are parsed using `parseFloat`.
 
 **Returns**: `Number`
 
 **Examples**:
 
 ```javascript
+{{ [1, 12, 5].max() }}
+// 12
+
 {{ [1, 5, 3, 9, 2].max() }}
 // 9
 
@@ -235,49 +253,44 @@ Returns the maximum value in the array.
 
 ---
 
-### merge(arr: Array)
+### merge(arr?: Array)
 
-Merges two arrays into one. For object arrays, all elements are preserved.
+Merges two object arrays into one object by merging key-value pairs of corresponding elements. If no argument is provided, merges all objects within the array into a single object.
 
 **Parameters**:
-- `arr` (Array): Array to merge into the base array
+- `arr` (Array, optional): Array of objects to merge with the base array
 
-**Returns**: `Array`
+**Returns**: `Object`
 
 **Examples**:
 
 ```javascript
-{{ [1, 2, 3].merge([4, 5]) }}
-// [1, 2, 3, 4, 5]
+// Merge two object arrays
+{{ [{ name: 'Nathan' }, { age: 42 }].merge([{ city: 'Berlin' }, { country: 'Germany' }]) }}
+// { name: 'Nathan', age: 42, city: 'Berlin', country: 'Germany' }
 
-{{ [].merge([4, 5]) }}
-// [4, 5]
-
-{{ [1, 2, 3].merge([]) }}
-// [1, 2, 3]
-
-{{ [].merge([]) }}
-// []
-
-{{ [1, 2, 3].merge([3, 2, 5]) }}
-// [1, 2, 3, 3, 2, 5]
-// Note: Does not automatically deduplicate
+// Merge all objects in array (no argument)
+{{ [{ name: 'Alice' }, { age: 25 }, { city: 'New York' }].merge() }}
+// { name: 'Alice', age: 25, city: 'New York' }
 
 {{ $('List A').items.merge($('List B').items) }}
-// Merge two lists
+// Merge two object arrays
 ```
 
 ---
 
 ### min()
 
-Returns the minimum value in an array containing only numbers.
+Returns the smallest number in the array. Throws an error if there are any non-numbers. String numbers are parsed using `parseFloat`.
 
 **Returns**: `Number`
 
 **Examples**:
 
 ```javascript
+{{ [12, 1, 5].min() }}
+// 1
+
 {{ [1, 5, 3, 9, 2].min() }}
 // 1
 
@@ -290,29 +303,42 @@ Returns the minimum value in an array containing only numbers.
 
 ---
 
-### pluck(fieldName?: String)
+### pluck(...fieldNames: String)
 
-Returns an array of objects where each object only contains the specified field name as a key.
+Returns an array containing the values of the given field(s) in each object of the array. Ignores any array elements that aren't objects or don't have keys matching the field name(s) provided. If multiple field names are provided, returns an array of arrays. If no field names are provided, returns the original array.
 
 **Parameters**:
-- `fieldName` (String, optional): Field name to extract
+- `fieldNames` (String, variadic): The keys to retrieve the value of
 
 **Returns**: `Array`
 
 **Examples**:
 
 ```javascript
+// Extract single field
 {{ [
-  { id: 1, name: 'Alice', age: 25 },
-  { id: 2, name: 'Bob', age: 30 }
+  { name: 'Nathan', age: 42 },
+  { name: 'Jan', city: 'Berlin' }
 ].pluck('name') }}
-// ['Alice', 'Bob']
+// ['Nathan', 'Jan']
 
+// Extract field that doesn't exist in all objects
 {{ [
-  { id: 1, name: 'Alice', age: 25 },
-  { id: 2, name: 'Bob', age: 30 }
+  { name: 'Nathan', age: 42 },
+  { name: 'Jan', city: 'Berlin' }
 ].pluck('age') }}
-// [25, 30]
+// [42]
+
+// Extract multiple fields
+{{ [
+  { name: 'Alice', age: 25, city: 'NYC' },
+  { name: 'Bob', age: 30, city: 'LA' }
+].pluck('name', 'age') }}
+// [['Alice', 25], ['Bob', 30]]
+
+// No arguments - returns original array
+{{ [1, 2, 3].pluck() }}
+// [1, 2, 3]
 
 {{ $('HTTP Request').body.users.pluck('email') }}
 // Extract all user emails
@@ -322,18 +348,21 @@ Returns an array of objects where each object only contains the specified field 
 
 ### randomItem()
 
-Returns a random element from the array.
+Returns a randomly-chosen element from the array. Returns `undefined` if the array is empty or `undefined`.
 
-**Returns**: `Array item`
+**Returns**: `Array item` or `undefined`
 
 **Examples**:
 
 ```javascript
+{{ ['quick', 'brown', 'fox'].randomItem() }}
+// Randomly returns one of: 'quick', 'brown', or 'fox'
+
 {{ [1, 2, 3, 4, 5].randomItem() }}
 // Randomly returns a number, e.g.: 3
 
-{{ ['red', 'green', 'blue'].randomItem() }}
-// Randomly returns a color
+{{ [].randomItem() }}
+// undefined
 
 {{ $('HTTP Request').body.quotes.randomItem() }}
 // Randomly select a quote
@@ -341,12 +370,12 @@ Returns a random element from the array.
 
 ---
 
-### removeDuplicates(key?: String)
+### removeDuplicates(...fieldNames: String)
 
-Removes duplicate elements from an array.
+Removes duplicate elements from an array. Alias for `unique()`. For object arrays, you can specify one or more field names to check for equality.
 
 **Parameters**:
-- `key` (String, optional): For object arrays, specifies the field name to use for duplicate detection
+- `fieldNames` (String, variadic, optional): For object arrays, specifies the field name(s) to use for duplicate detection
 
 **Returns**: `Array`
 
@@ -368,17 +397,15 @@ Removes duplicate elements from an array.
 //   { "id": 2, "name": "Bob" }
 // ]
 
-// Object array without specifying field
-// Different object references won't be deduplicated even if content is the same
+// Object array with multiple field names
 {{ [
-  { id: 1, name: "Alice" },
-  { id: 1, name: "Alice" },
-  { id: 2, name: "Bob" }
-].removeDuplicates() }}
+  { name: 'Alice', age: 25, city: 'NYC' },
+  { name: 'Alice', age: 25, city: 'LA' },
+  { name: 'Bob', age: 30, city: 'NYC' }
+].removeDuplicates('name', 'age') }}
 // [
-//   { "id": 1, "name": "Alice" },
-//   { "id": 1, "name": "Alice" },
-//   { "id": 2, "name": "Bob" }
+//   { "name": "Alice", "age": 25, "city": "NYC" },
+//   { "name": "Bob", "age": 30, "city": "NYC" }
 // ]
 
 {{ $('HTTP Request').body.users.removeDuplicates('email') }}
@@ -387,13 +414,14 @@ Removes duplicate elements from an array.
 
 ---
 
-### renameKeys(from: String, to: String)
+### renameKeys(from1: String, to1: String, from2?: String, to2?: String, ...)
 
-Renames all matching keys in the array. You can rename multiple keys by providing comma-separated strings.
+Changes all matching keys (field names) of any objects in the array. Rename more than one key by adding extra argument pairs: `from1, to1, from2, to2, ...`. Must provide an even number of arguments.
 
 **Parameters**:
-- `from` (String): Original key names to rename (comma-separated)
-- `to` (String): New key names (comma-separated)
+- `from1` (String): The key to rename
+- `to1` (String): The new key name
+- `from2, to2, ...` (String, optional): Additional key pairs to rename
 
 **Returns**: `Array`
 
@@ -402,23 +430,23 @@ Renames all matching keys in the array. You can rename multiple keys by providin
 ```javascript
 // Rename single key
 {{ [
-  { oldName: 'Alice', age: 25 },
-  { oldName: 'Bob', age: 30 }
-].renameKeys('oldName', 'newName') }}
+  { name: 'bob' },
+  { name: 'meg' }
+].renameKeys('name', 'x') }}
 // [
-//   { "newName": "Alice", "age": 25 },
-//   { "newName": "Bob", "age": 30 }
+//   { "x": "bob" },
+//   { "x": "meg" }
 // ]
 
 // Rename multiple keys
 {{ [
-  { firstName: 'Alice', lastName: 'Smith' }
-].renameKeys('firstName,lastName', 'first,last') }}
+  { firstName: 'Alice', lastName: 'Smith', age: 25 }
+].renameKeys('firstName', 'first', 'lastName', 'last') }}
 // [
-//   { "first": "Alice", "last": "Smith" }
+//   { "first": "Alice", "last": "Smith", "age": 25 }
 // ]
 
-{{ $('HTTP Request').body.users.renameKeys('user_id,user_name', 'id,name') }}
+{{ $('HTTP Request').body.users.renameKeys('user_id', 'id', 'user_name', 'name') }}
 // Convert API field names to internal field names
 ```
 
@@ -426,18 +454,18 @@ Renames all matching keys in the array. You can rename multiple keys by providin
 
 ### sum()
 
-Returns the sum of all values in an array of parseable numbers.
+Returns the total of all the numbers in the array. Throws an error if there are any non-numbers. String numbers are parsed using `parseFloat`.
 
 **Returns**: `Number`
 
 **Examples**:
 
 ```javascript
+{{ [12, 1, 5].sum() }}
+// 18
+
 {{ [1, 2, 3, 4, 5].sum() }}
 // 15
-
-{{ [10, 20, 30].sum() }}
-// 60
 
 {{ $('HTTP Request').body.prices.sum() }}
 // Total price
@@ -490,29 +518,54 @@ Merges two arrays and removes duplicates.
 
 ---
 
-### unique(key?: String)
+### unique(...fieldNames: String)
 
-Removes duplicates from an array. Same functionality as `removeDuplicates()`.
+Removes any duplicate elements from the array. For object arrays, you can specify one or more field names to check for equality. Same functionality as `removeDuplicates()`.
 
 **Parameters**:
-- `key` (String, optional): For object arrays, specifies the field name to use for duplicate detection
+- `fieldNames` (String, variadic, optional): For object arrays, specifies the field name(s) to use for duplicate detection
 
 **Returns**: `Array`
 
 **Examples**:
 
 ```javascript
+// Simple array deduplication
+{{ ['quick', 'brown', 'quick'].unique() }}
+// ['quick', 'brown']
+
 {{ [1, 1, 2, 2, 3].unique() }}
 // [1, 2, 3]
 
+// Object array without field names (compares entire objects)
 {{ [
-  { id: 1, name: 'Alice' },
-  { id: 1, name: 'Alice' },
-  { id: 2, name: 'Bob' }
-].unique('id') }}
+  { name: 'Nathan', age: 42 },
+  { name: 'Nathan', age: 22 }
+].unique() }}
 // [
-//   { "id": 1, "name": "Alice" },
-//   { "id": 2, "name": "Bob" }
+//   { "name": "Nathan", "age": 42 },
+//   { "name": "Nathan", "age": 22 }
+// ]
+// Note: Objects are different, so both are kept
+
+// Object array with single field name
+{{ [
+  { name: 'Nathan', age: 42 },
+  { name: 'Nathan', age: 22 }
+].unique('name') }}
+// [
+//   { "name": "Nathan", "age": 42 }
+// ]
+
+// Object array with multiple field names
+{{ [
+  { name: 'Alice', age: 25, city: 'NYC' },
+  { name: 'Alice', age: 25, city: 'LA' },
+  { name: 'Bob', age: 30, city: 'NYC' }
+].unique('name', 'age') }}
+// [
+//   { "name": "Alice", "age": 25, "city": "NYC" },
+//   { "name": "Bob", "age": 30, "city": "NYC" }
 // ]
 ```
 
@@ -534,8 +587,11 @@ Array methods can be chained:
 ### 1. Data Extraction
 
 ```javascript
-// Extract all user emails
+// Extract single field from all objects
 {{ $('Get Users').body.users.pluck('email') }}
+
+// Extract multiple fields from all objects
+{{ $('Get Users').body.users.pluck('name', 'email') }}
 
 // Extract first and last items
 {{ $('HTTP Request').body.items.first() }}
@@ -559,21 +615,30 @@ Array methods can be chained:
 ### 3. Data Cleaning
 
 ```javascript
-// Remove null values
+// Remove null values (recursively processes nested arrays and objects)
 {{ $('HTTP Request').body.items.compact() }}
 
-// Deduplicate
+// Deduplicate by single field
 {{ $('HTTP Request').body.users.unique('id') }}
 
-// Rename fields
+// Deduplicate by multiple fields
+{{ $('HTTP Request').body.users.unique('email', 'name') }}
+
+// Rename single field
 {{ $('HTTP Request').body.users.renameKeys('user_id', 'id') }}
+
+// Rename multiple fields
+{{ $('HTTP Request').body.users.renameKeys('user_id', 'id', 'user_name', 'name') }}
 ```
 
 ### 4. Data Merging
 
 ```javascript
-// Merge two lists
+// Merge object arrays into single object
 {{ $('List A').items.merge($('List B').items) }}
+
+// Merge all objects in array
+{{ $('HTTP Request').body.items.merge() }}
 
 // Merge and deduplicate
 {{ $('List A').items.union($('List B').items) }}

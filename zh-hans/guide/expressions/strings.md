@@ -9,6 +9,27 @@ description: 字符串数据转换方法参考
 
 ## 方法列表
 
+### length
+
+返回字符串的长度（字符数）。
+
+**返回值**: `Number`
+
+**示例**:
+
+```javascript
+{{ "hello".length }}
+// 5
+
+{{ "".length }}
+// 0
+
+{{ $('Chat Trigger').message.length }}
+// 获取消息长度
+```
+
+---
+
 ### base64Encode()
 
 将字符串编码为 Base64。
@@ -535,6 +556,81 @@ description: 字符串数据转换方法参考
 
 ---
 
+### toKebabCase()
+
+将字符串格式化为短横线命名（kebab-case）。空格和下划线被替换为连字符，符号被移除，所有字母转为小写，连续的连字符会被合并。
+
+**返回值**: `String`
+
+**示例**:
+
+```javascript
+{{ "Hello_world Test".toKebabCase() }}
+// "hello-world-test"
+
+{{ "helloWorld".toKebabCase() }}
+// "helloworld"
+
+{{ "hello-world".toKebabCase() }}
+// "hello-world"
+
+{{ "quick brown $FOX".toKebabCase() }}
+// "quick-brown-fox"
+
+{{ $('HTTP Request').body.fieldName.toKebabCase() }}
+// 转换字段名为短横线命名
+```
+
+---
+
+### toCamelCase()
+
+将字符串格式化为驼峰命名（camelCase）。第一个单词小写，后续单词首字母大写。空格、下划线和连字符被移除，符号被去除。
+
+**返回值**: `String`
+
+**示例**:
+
+```javascript
+{{ "hello_world".toCamelCase() }}
+// "helloWorld"
+
+{{ "hello world test".toCamelCase() }}
+// "helloWorldTest"
+
+{{ "HelloWorld".toCamelCase() }}
+// "helloWorld"
+
+{{ $('HTTP Request').body.fieldName.toCamelCase() }}
+// 转换字段名为驼峰命名
+```
+
+---
+
+### toPascalCase()
+
+将字符串格式化为帕斯卡命名（PascalCase）。每个单词的首字母大写，其余字母小写。空格、下划线和连字符被移除，符号被去除。
+
+**返回值**: `String`
+
+**示例**:
+
+```javascript
+{{ "hello_world test".toPascalCase() }}
+// "HelloWorldTest"
+
+{{ "hello world".toPascalCase() }}
+// "HelloWorld"
+
+{{ "helloWorld".toPascalCase() }}
+// "HelloWorld"
+
+{{ $('HTTP Request').body.fieldName.toPascalCase() }}
+// 转换字段名为帕斯卡命名
+```
+
+---
+
 ### toWholeNumber()
 
 将字符串转换为整数（Whole Number）。对于浮点数，直接截断小数部分。
@@ -555,6 +651,30 @@ description: 字符串数据转换方法参考
 
 {{ $('HTTP Request').body.count.toWholeNumber() }}
 // 转换为整数
+```
+
+---
+
+### urlEncode(entireString?: Boolean)
+
+将字符串编码以便在 URL 中使用或包含。
+
+**参数**:
+- `entireString` (Boolean, 可选): 是否编码整个字符串
+
+**返回值**: `String`
+
+**示例**:
+
+```javascript
+{{ "hello world".urlEncode() }}
+// "hello%20world"
+
+{{ "name=Alice&age=25".urlEncode() }}
+// "name%3DAlice%26age%3D25"
+
+{{ $('Chat Trigger').message.urlEncode() }}
+// 将消息编码用于 URL
 ```
 
 ---
@@ -580,10 +700,6 @@ description: 字符串数据转换方法参考
 {{ $('HTTP Request').body.encodedParam.urlDecode() }}
 // 解码 URL 参数
 ```
-
----
-
-### urlEncode(entireString?: Boolean)
 
 将字符串编码以便在 URL 中使用或包含。
 

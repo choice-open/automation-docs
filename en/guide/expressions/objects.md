@@ -9,16 +9,71 @@ Object methods are used to process and transform object data.
 
 ## Method Reference
 
-### isEmpty()
+### compact()
 
-Checks if an object has no key-value pairs.
+Removes all fields that have `null` or `undefined` values. Recursively processes nested objects.
+
+**Returns**: `Object`
+
+**Examples**:
+
+```javascript
+{{ ({ x: null, y: 2, z: '', w: 'nil', a: {} }).compact() }}
+// { y: 2, z: '', w: 'nil', a: {} }
+
+{{ { a: 1, b: null, c: undefined, d: "hello" }.compact() }}
+// { "a": 1, "d": "hello" }
+
+{{ { a: 0, b: "", c: [], d: {} }.compact() }}
+// { "a": 0, "b": "", "c": [], "d": {} }
+// Note: 0, empty string, empty array, empty object are not removed
+
+{{ $('HTTP Request').body.user.compact() }}
+// Remove null and undefined values from user object (recursively)
+```
+
+---
+
+### hasField(fieldName: String)
+
+Returns `true` if there is a field called `name`. Only checks top-level keys. Comparison is case-sensitive.
+
+**Parameters**:
+- `fieldName` (String): The name of the key to search for
 
 **Returns**: `Boolean`
 
 **Examples**:
 
 ```javascript
-{{ {}.isEmpty() }}
+{{ ({ name: 'Nathan', age: 42 }).hasField('name') }}
+// true
+
+{{ ({ name: 'Nathan', age: 42 }).hasField('Name') }}
+// false
+
+{{ ({ name: 'Nathan', age: 42 }).hasField('inventedField') }}
+// false
+
+{{ $('HTTP Request').body.user.hasField('email') }}
+// Check if user object contains email field
+```
+
+---
+
+### isEmpty()
+
+Returns `true` if the Object has no keys (fields) set or is `null`.
+
+**Returns**: `Boolean`
+
+**Examples**:
+
+```javascript
+{{ ({ name: 'Nathan' }).isEmpty() }}
+// false
+
+{{ ({}).isEmpty() }}
 // true
 
 {{ { name: 'Alice' }.isEmpty() }}
@@ -30,21 +85,70 @@ Checks if an object has no key-value pairs.
 
 ---
 
-### merge(object: Object)
+### isNotEmpty()
 
-Merges two objects into one, using the first object as the base. If the same keys exist in both objects, the base object's keys take priority.
+Returns `true` if the Object has at least one key (field) set.
+
+**Returns**: `Boolean`
+
+**Examples**:
+
+```javascript
+{{ ({ name: 'Nathan' }).isNotEmpty() }}
+// true
+
+{{ ({}).isNotEmpty() }}
+// false
+
+{{ $('HTTP Request').body.config.isNotEmpty() }}
+// Check if config object has fields
+```
+
+---
+
+### keepFieldsContaining(value: String)
+
+Removes any fields whose values don't at least partly match the given `value`. Comparison is case-sensitive. Fields that aren't strings will always be removed. Throws an error if the argument is not a string.
 
 **Parameters**:
-- `object` (Object): Object to merge
+- `value` (String): The text that a value must contain in order to be kept
 
 **Returns**: `Object`
 
 **Examples**:
 
 ```javascript
-// Base object takes priority
-{{ { a: 1, b: 2 }.merge({ b: 3, c: 4 }) }}
-// { "a": 1, "b": 2, "c": 4 }
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).keepFieldsContaining('Nathan') }}
+// { name: 'Mr Nathan' }
+
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).keepFieldsContaining('nathan') }}
+// {}
+// Case-sensitive, so 'Nathan' doesn't match 'nathan'
+
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).keepFieldsContaining('han') }}
+// { name: 'Mr Nathan', city: 'hanoi' }
+
+{{ $('HTTP Request').body.data.keepFieldsContaining("prod") }}
+// Keep only production-related fields
+```
+
+---
+
+### merge(object: Object)
+
+Merges two objects into a new object using the current object as the base. If both objects share a key, the base object's value is kept. Throws an error if the argument is not an object or is an array.
+
+**Parameters**:
+- `object` (Object): The object to merge into the base object
+
+**Returns**: `Object`
+
+**Examples**:
+
+```javascript
+// Base object values take priority
+{{ ({ a: 1, b: 2 }).merge({ b: 3, c: 4 }) }}
+// { a: 1, b: 2, c: 4 }
 
 {{ { name: 'Alice', age: 25 }.merge({ age: 30, city: 'Beijing' }) }}
 // { "name": "Alice", "age": 25, "city": "Beijing" }
@@ -55,42 +159,21 @@ Merges two objects into one, using the first object as the base. If the same key
 
 ---
 
-### hasField(fieldName: String)
-
-Checks if an object contains a specified field. Only supports top-level keys.
-
-**Parameters**:
-- `fieldName` (String): Field name to check
-
-**Returns**: `Boolean`
-
-**Examples**:
-
-```javascript
-{{ { name: 'Alice', age: 25 }.hasField('name') }}
-// true
-
-{{ { name: 'Alice', age: 25 }.hasField('email') }}
-// false
-
-{{ $('HTTP Request').body.user.hasField('email') }}
-// Check if user object contains email field
-```
-
----
-
 ### removeField(key: String)
 
-Removes a specified field from an object.
+Removes a field from the Object. The same as JavaScript's `delete`. Returns the original object if the field doesn't exist.
 
 **Parameters**:
-- `key` (String): Field name to remove
+- `key` (String): The name of the field to remove
 
 **Returns**: `Object`
 
 **Examples**:
 
 ```javascript
+{{ ({ name: 'Nathan', city: 'hanoi' }).removeField('name') }}
+// { city: 'hanoi' }
+
 {{ { name: 'Alice', age: 25, password: '123456' }.removeField('password') }}
 // { "name": "Alice", "age": 25 }
 
@@ -102,27 +185,25 @@ Removes a specified field from an object.
 
 ### removeFieldsContaining(value: String)
 
-Removes all fields whose values contain the specified string.
+Removes keys (fields) whose values at least partly match the given `value`. Comparison is case-sensitive. Fields that aren't strings are always kept. Throws an error if the argument is not a string.
 
 **Parameters**:
-- `value` (String): String to match in field values
+- `value` (String): The text that a value must contain in order to be removed
 
 **Returns**: `Object`
 
 **Examples**:
 
 ```javascript
-{{ { a: "apple", b: "banana", c: "cherry" }.removeFieldsContaining("a") }}
-// { "c": "cherry" }
-// Removes fields with values containing "a"
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).removeFieldsContaining('Nathan') }}
+// { city: 'hanoi', age: 42 }
 
-{{ { a: "test", b: "production", c: "test_mode" }.removeFieldsContaining("test") }}
-// { "b": "production" }
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).removeFieldsContaining('Han') }}
+// { age: 42 }
 
-// Using empty string
-{{ { a: "apple", b: "banana" }.removeFieldsContaining("") }}
-// {}
-// All strings contain empty string, so all removed
+{{ ({ name: 'Mr Nathan', city: 'hanoi', age: 42 }).removeFieldsContaining('nathan') }}
+// { name: 'Mr Nathan', city: 'hanoi', age: 42 }
+// Case-sensitive, so 'Nathan' doesn't match 'nathan'
 
 {{ $('HTTP Request').body.data.removeFieldsContaining("temp") }}
 // Remove all temporary fields containing "temp"
@@ -130,70 +211,18 @@ Removes all fields whose values contain the specified string.
 
 ---
 
-### keepFieldsContaining(value: String)
-
-Removes fields that don't match the given value (keeps fields containing the specified string).
-
-**Parameters**:
-- `value` (String): String to match in field values
-
-**Returns**: `Object`
-
-**Examples**:
-
-```javascript
-{{ { a: "apple", b: "banana", c: "cherry" }.keepFieldsContaining("a") }}
-// { "a": "apple", "b": "banana" }
-// Keeps fields with values containing "a"
-
-{{ { a: "apple", b: "banana", c: "cherry" }.keepFieldsContaining("x") }}
-// {}
-// No field values contain "x"
-
-{{ { a: "apple", b: "banana" }.keepFieldsContaining("") }}
-// { "a": "apple", "b": "banana" }
-// All strings contain empty string, so all kept
-
-{{ $('HTTP Request').body.data.keepFieldsContaining("prod") }}
-// Keep only production-related fields
-```
-
----
-
-### compact()
-
-Removes null values from an object (only removes `null` and `undefined`).
-
-**Returns**: `Object`
-
-**Examples**:
-
-```javascript
-{{ { a: 1, b: null, c: undefined, d: "hello" }.compact() }}
-// { "a": 1, "d": "hello" }
-
-{{ { a: 0, b: "", c: [], d: {} }.compact() }}
-// { "a": 0, "b": "", "c": [], "d": {} }
-// Note: 0, empty string, empty array, empty object are not removed
-
-{{ { a: false, b: null, c: undefined }.compact() }}
-// { "a": false }
-
-{{ $('HTTP Request').body.user.compact() }}
-// Remove null and undefined values from user object
-```
-
----
-
 ### toJsonString()
 
-Converts an object to a JSON string. Equivalent to `JSON.stringify`.
+Converts the Object to a JSON string. Similar to JavaScript's `JSON.stringify()`.
 
 **Returns**: `String`
 
 **Examples**:
 
 ```javascript
+{{ ({ name: 'Mr Nathan', age: 42 }).toJsonString() }}
+// '{"name":"Nathan","age":42}'
+
 {{ { name: 'Alice', age: 25 }.toJsonString() }}
 // '{"name":"Alice","age":25}'
 
@@ -205,18 +234,21 @@ Converts an object to a JSON string. Equivalent to `JSON.stringify`.
 
 ### urlEncode()
 
-Converts an object to URL parameters. Only supports top-level keys.
+Generates a URL parameter string from the Object's keys and values. Only top-level keys are supported.
 
 **Returns**: `String`
 
 **Examples**:
 
 ```javascript
+{{ ({ name: 'Mr Nathan', city: 'hanoi' }).urlEncode() }}
+// 'name=Mr+Nathan&city=hanoi'
+
 {{ { name: 'Alice', age: 25 }.urlEncode() }}
 // "name=Alice&age=25"
 
 {{ { q: 'hello world', page: 1 }.urlEncode() }}
-// "q=hello%20world&page=1"
+// "q=hello+world&page=1"
 
 {{ $('HTTP Request').body.params.urlEncode() }}
 // Convert params object to URL query string
@@ -285,6 +317,9 @@ Converts an object to URL parameters. Only supports top-level keys.
 
 // Check if object is empty
 {{ $('HTTP Request').body.result.isEmpty() }}
+
+// Check if object has fields
+{{ $('HTTP Request').body.result.isNotEmpty() }}
 ```
 
 ## Method Chaining

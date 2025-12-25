@@ -9,6 +9,27 @@ String methods are used to process and transform string data.
 
 ## Method Reference
 
+### length
+
+Returns the length of the string (number of characters).
+
+**Returns**: `Number`
+
+**Examples**:
+
+```javascript
+{{ "hello".length }}
+// 5
+
+{{ "".length }}
+// 0
+
+{{ $('Chat Trigger').message.length }}
+// Get message length
+```
+
+---
+
 ### base64Encode()
 
 Encodes a string to Base64.
@@ -631,6 +652,30 @@ Converts a string to an integer (whole number). For floats, truncates decimal pa
 
 ---
 
+### urlEncode(entireString?: Boolean)
+
+Encodes a string for use in URLs.
+
+**Parameters**:
+- `entireString` (Boolean, optional): Whether to encode entire string
+
+**Returns**: `String`
+
+**Examples**:
+
+```javascript
+{{ "hello world".urlEncode() }}
+// "hello%20world"
+
+{{ "name=Alice&age=25".urlEncode() }}
+// "name%3DAlice%26age%3D25"
+
+{{ $('Chat Trigger').message.urlEncode() }}
+// Encode message for URL
+```
+
+---
+
 ### urlDecode(entireString?: Boolean)
 
 Decodes a URL-encoded string.
@@ -652,10 +697,6 @@ Decodes a URL-encoded string.
 {{ $('HTTP Request').body.encodedParam.urlDecode() }}
 // Decode URL parameter
 ```
-
----
-
-### urlEncode(entireString?: Boolean)
 
 Encodes a string for use in URLs.
 

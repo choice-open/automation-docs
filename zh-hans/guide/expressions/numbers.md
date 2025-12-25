@@ -11,13 +11,16 @@ description: 数字数据转换方法参考
 
 ### ceil()
 
-将数字向上取整为整数。对于负数，向"0"方向取整。
+将数字向上取整到下一个整数。
 
 **返回值**: `Number`
 
 **示例**:
 
 ```javascript
+{{ (1.234).ceil() }}
+// 2
+
 {{ (3.2).ceil() }}
 // 4
 
@@ -25,9 +28,6 @@ description: 数字数据转换方法参考
 // 4
 
 {{ (-3.2).ceil() }}
-// -3 (向"0"方向取整)
-
-{{ (-3.9).ceil() }}
 // -3
 
 {{ $('HTTP Request').body.price.ceil() }}
@@ -38,13 +38,16 @@ description: 数字数据转换方法参考
 
 ### floor()
 
-将数字向下取整为整数。对于负数，向更负的方向取整。
+将数字向下取整到最近的整数。
 
 **返回值**: `Number`
 
 **示例**:
 
 ```javascript
+{{ (1.234).floor() }}
+// 1
+
 {{ (3.2).floor() }}
 // 3
 
@@ -52,7 +55,7 @@ description: 数字数据转换方法参考
 // 3
 
 {{ (-3.2).floor() }}
-// -4 (向更负方向取整)
+// -4
 
 {{ (-3.7).floor() }}
 // -4
@@ -65,18 +68,21 @@ description: 数字数据转换方法参考
 
 ### isEven()
 
-如果数字为偶数，则返回 `true`。仅适用于整数。
+如果数字为偶数，返回 `true`，否则返回 `false`。如果数字不是整数，会抛出错误。
 
 **返回值**: `Boolean`
 
 **示例**:
 
 ```javascript
-{{ (2).isEven() }}
+{{ (33).isEven() }}
+// false
+
+{{ (42).isEven() }}
 // true
 
-{{ (3).isEven() }}
-// false
+{{ (2).isEven() }}
+// true
 
 {{ (0).isEven() }}
 // true
@@ -92,18 +98,21 @@ description: 数字数据转换方法参考
 
 ### isOdd()
 
-如果数字为奇数，则返回 `true`。仅适用于整数。
+如果数字为奇数，返回 `true`，否则返回 `false`。如果数字不是整数，会抛出错误。
 
 **返回值**: `Boolean`
 
 **示例**:
 
 ```javascript
-{{ (3).isOdd() }}
+{{ (33).isOdd() }}
 // true
 
-{{ (2).isOdd() }}
+{{ (42).isOdd() }}
 // false
+
+{{ (3).isOdd() }}
+// true
 
 {{ (1).isOdd() }}
 // true
@@ -119,10 +128,10 @@ description: 数字数据转换方法参考
 
 ### round(decimalPlaces?: Number)
 
-返回数字四舍五入到最接近的整数的值，除非指定了小数位数。
+将数字四舍五入到最近的整数（或指定的小数位数）。
 
 **参数**:
-- `decimalPlaces` (Number, 可选): 保留的小数位数
+- `decimalPlaces` (Number, 可选): 要四舍五入到的小数位数（默认：`0`）
 
 **返回值**: `Number`
 
@@ -130,28 +139,24 @@ description: 数字数据转换方法参考
 
 ```javascript
 // 四舍五入到整数
+{{ (1.256).round() }}
+// 1
+
 {{ (3.4).round() }}
 // 3
 
 {{ (3.6).round() }}
 // 4
 
-// 负数：小数部分 >= 0.5 时，向更负方向四舍五入
-{{ (-3.4).round() }}
-// -3
-
-{{ (-3.6).round() }}
-// -4
-
 // 保留指定小数位数
+{{ (1.256).round(1) }}
+// 1.3
+
+{{ (1.256).round(2) }}
+// 1.26
+
 {{ (3.14159).round(2) }}
 // 3.14
-
-{{ (-3.14159).round(2) }}
-// -3.14
-
-{{ (3.14159).round(4) }}
-// 3.1416
 
 {{ $('HTTP Request').body.price.round(2) }}
 // 将价格四舍五入到 2 位小数
@@ -161,26 +166,20 @@ description: 数字数据转换方法参考
 
 ### toBoolean()
 
-将数字转换为布尔值。`0`、`0.0` 和 `-0.0` 转换为 `false`，其他所有值转换为 `true`。
+对于 `0` 返回 `false`，对于任何其他数字（包括负数）返回 `true`。
 
 **返回值**: `Boolean`
 
 **示例**:
 
 ```javascript
+{{ (12).toBoolean() }}
+// true
+
 {{ (0).toBoolean() }}
 // false
 
-{{ (0.0).toBoolean() }}
-// false
-
-{{ (-0.0).toBoolean() }}
-// false
-
-{{ (1).toBoolean() }}
-// true
-
-{{ (-1).toBoolean() }}
+{{ (-1.3).toBoolean() }}
 // true
 
 {{ (100).toBoolean() }}
@@ -247,11 +246,11 @@ description: 数字数据转换方法参考
   .round(2) }}
 // 求和后保留 2 位小数
 
-// 类型转换链
-{{ $('Chat Trigger').message
-  .toInt()
+// 四舍五入后检查是否为偶数
+{{ $('HTTP Request').body.value
+  .round()
   .isEven() }}
-// 将字符串转为数字，然后检查是否为偶数
+// 四舍五入到整数，然后检查是否为偶数
 ```
 
 ## 最佳实践

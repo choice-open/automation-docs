@@ -11,13 +11,16 @@ Number methods are used to process and transform numeric data.
 
 ### ceil()
 
-Rounds a number up to the nearest integer. For negative numbers, rounds toward "0".
+Rounds the number up to the next whole number.
 
 **Returns**: `Number`
 
 **Examples**:
 
 ```javascript
+{{ (1.234).ceil() }}
+// 2
+
 {{ (3.2).ceil() }}
 // 4
 
@@ -25,9 +28,6 @@ Rounds a number up to the nearest integer. For negative numbers, rounds toward "
 // 4
 
 {{ (-3.2).ceil() }}
-// -3 (rounds toward "0")
-
-{{ (-3.9).ceil() }}
 // -3
 
 {{ $('HTTP Request').body.price.ceil() }}
@@ -38,13 +38,16 @@ Rounds a number up to the nearest integer. For negative numbers, rounds toward "
 
 ### floor()
 
-Rounds a number down to the nearest integer. For negative numbers, rounds toward more negative direction.
+Rounds the number down to the nearest whole number.
 
 **Returns**: `Number`
 
 **Examples**:
 
 ```javascript
+{{ (1.234).floor() }}
+// 1
+
 {{ (3.2).floor() }}
 // 3
 
@@ -52,7 +55,7 @@ Rounds a number down to the nearest integer. For negative numbers, rounds toward
 // 3
 
 {{ (-3.2).floor() }}
-// -4 (rounds toward more negative)
+// -4
 
 {{ (-3.7).floor() }}
 // -4
@@ -65,18 +68,21 @@ Rounds a number down to the nearest integer. For negative numbers, rounds toward
 
 ### isEven()
 
-Returns `true` if the number is even. Only works with integers.
+Returns `true` if the number is even or `false` if not. Throws an error if the number isn't a whole number.
 
 **Returns**: `Boolean`
 
 **Examples**:
 
 ```javascript
-{{ (2).isEven() }}
+{{ (33).isEven() }}
+// false
+
+{{ (42).isEven() }}
 // true
 
-{{ (3).isEven() }}
-// false
+{{ (2).isEven() }}
+// true
 
 {{ (0).isEven() }}
 // true
@@ -92,18 +98,21 @@ Returns `true` if the number is even. Only works with integers.
 
 ### isOdd()
 
-Returns `true` if the number is odd. Only works with integers.
+Returns `true` if the number is odd or `false` if not. Throws an error if the number isn't a whole number.
 
 **Returns**: `Boolean`
 
 **Examples**:
 
 ```javascript
-{{ (3).isOdd() }}
+{{ (33).isOdd() }}
 // true
 
-{{ (2).isOdd() }}
+{{ (42).isOdd() }}
 // false
+
+{{ (3).isOdd() }}
+// true
 
 {{ (1).isOdd() }}
 // true
@@ -119,10 +128,10 @@ Returns `true` if the number is odd. Only works with integers.
 
 ### round(decimalPlaces?: Number)
 
-Returns the value of a number rounded to the nearest integer, unless decimal places are specified.
+Rounds the number to the nearest integer (or decimal place).
 
 **Parameters**:
-- `decimalPlaces` (Number, optional): Number of decimal places to preserve
+- `decimalPlaces` (Number, optional): The number of decimal places to round to (default: `0`)
 
 **Returns**: `Number`
 
@@ -130,28 +139,24 @@ Returns the value of a number rounded to the nearest integer, unless decimal pla
 
 ```javascript
 // Round to integer
+{{ (1.256).round() }}
+// 1
+
 {{ (3.4).round() }}
 // 3
 
 {{ (3.6).round() }}
 // 4
 
-// Negative numbers: when decimal part >= 0.5, rounds toward more negative
-{{ (-3.4).round() }}
-// -3
-
-{{ (-3.6).round() }}
-// -4
-
 // Preserve specified decimal places
+{{ (1.256).round(1) }}
+// 1.3
+
+{{ (1.256).round(2) }}
+// 1.26
+
 {{ (3.14159).round(2) }}
 // 3.14
-
-{{ (-3.14159).round(2) }}
-// -3.14
-
-{{ (3.14159).round(4) }}
-// 3.1416
 
 {{ $('HTTP Request').body.price.round(2) }}
 // Round price to 2 decimal places
@@ -161,26 +166,20 @@ Returns the value of a number rounded to the nearest integer, unless decimal pla
 
 ### toBoolean()
 
-Converts a number to a boolean. `0`, `0.0`, and `-0.0` convert to `false`, all other values convert to `true`.
+Returns `false` for `0` and `true` for any other number (including negative numbers).
 
 **Returns**: `Boolean`
 
 **Examples**:
 
 ```javascript
+{{ (12).toBoolean() }}
+// true
+
 {{ (0).toBoolean() }}
 // false
 
-{{ (0.0).toBoolean() }}
-// false
-
-{{ (-0.0).toBoolean() }}
-// false
-
-{{ (1).toBoolean() }}
-// true
-
-{{ (-1).toBoolean() }}
+{{ (-1.3).toBoolean() }}
 // true
 
 {{ (100).toBoolean() }}
@@ -247,11 +246,11 @@ Number methods can be chained with other methods:
   .round(2) }}
 // Sum then preserve 2 decimal places
 
-// Type conversion chain
-{{ $('Chat Trigger').message
-  .toInt()
+// Round then check if even
+{{ $('HTTP Request').body.value
+  .round()
   .isEven() }}
-// Convert string to number, then check if even
+// Round to integer, then check if even
 ```
 
 ## Best Practices
